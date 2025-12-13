@@ -124,6 +124,8 @@ After this step, the project is ready for deployment and version updates using t
 
 This verifies that the EB CLI is correctly connected to the existing Elastic Beanstalk environment.
 
+**NOTE: The application version shown on the webpage is changed in the server.js file.**
+
 ### C6. Deploy New Version Using EB CLI
 
     eb deploy --label 1.0.1
