@@ -72,15 +72,3 @@ Terraform always compares three things:
 This comparison helps Terraform figure out what needs to be created, updated, or deleted.
 
 ---
-
-### The State File (`.tfstate`)  
-**Why it's important:**
-- It's Terraform's "source of truth"
-- Tracks what resources Terraform has created
-
-**How each command uses it:**  
-- plan: Compares state file with code and real cloud resources to determine changes
-- apply: Updates state file after successfully making changes
-- destroy: Uses state file to know what to delete
-
----
