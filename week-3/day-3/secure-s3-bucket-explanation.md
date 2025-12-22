@@ -10,7 +10,7 @@
 
 ---
 
-# 2. Resources → SecureBucket (The S3 bucket)
+# 2. Resources --> SecureBucket (The S3 bucket)
 
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
