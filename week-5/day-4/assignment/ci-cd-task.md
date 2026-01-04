@@ -102,32 +102,32 @@ This document describes how to automatically deploy a Dockerized application to 
 
 ## 6. Test the CI/CD Setup
 
-1. Push code -> GitHub Actions runs automatically.  
+**1. Push code -> GitHub Actions runs automatically.** 
 
-2. GitHub Actions Triggered
+**2. GitHub Actions Triggered**
 
 ![image](../images/image-1.png)
 ---
-2. Docker Image Loaded on EC2
+**2. Docker Image Loaded on EC2**
 
 ![image](../images/image-2.png)
 ---
-3. Docker Container Running
+**3. Docker Container Running**
 
 ![image](../images/image-3.png)
 ---
-4. Application Running in Browser
+**4. Application Running in Browser**
 
 ![image](../images/image-4.png)
 ---
 
 ## 7. Test the update
 
-1. GitHub Actions Triggered
+**1. GitHub Actions Triggered**
 
 ![image](../images/image-5.png)
 ---
-2. Updated Application Running in Browser
+**2. Updated Application Running in Browser**
 
 ![image](../images/image-6.png)
 
