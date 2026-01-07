@@ -14,7 +14,7 @@ This document describes how to automatically deploy a Dockerized application to 
     - HTTP (80)
 5. Launch the instance
 
-## 2. Install Docker
+## 2. Install Docker & Docker compose
 
 1. SSH into the server
 2. Install docker
@@ -24,12 +24,17 @@ This document describes how to automatically deploy a Dockerized application to 
         sudo systemctl start docker
         sudo usermod -aG docker ec2-user
 
+3. Install Docker Compose
+
 ## 3. Prepare GitHub
 
 1. Add secrets: base64 encoded KEY
-2. Add variable: EC2 Public IP
+2. Add secrets: dockerhub username
+3. Add secrets: dockerhub token
+4. Add variable: EC2 Public IP
+5. Add variable: docker repo name
 
-## 4. Add Dockerfile
+## 4. Add Dockerfile into github repo
 
     FROM nginx:alpine
 
@@ -39,9 +44,27 @@ This document describes how to automatically deploy a Dockerized application to 
 
     EXPOSE 80
 
-## 5. Add GitHub Actions Workflow
+## 5. Create docker-compose.yml on EC2
 
-    name: Build & Deploy NGINX Docker App to EC2
+SSH again into EC2:
+
+    cd /home/ec2-user
+    nano docker-compose.yml
+    ---
+    version: "3"
+
+    services:
+    web:
+        image: yourdockerhubusername/yourrepo:latest
+        container_name: web
+        ports:
+        - "80:80"
+        restart: always
+
+
+## 6. Add GitHub Actions Workflow
+
+    name: CI/CD TO EC2 (DOCKERHUB)
 
     on:
     push:
@@ -51,23 +74,33 @@ This document describes how to automatically deploy a Dockerized application to 
     jobs:
     deploy:
         runs-on: ubuntu-latest
+
         env:
         SERVER_IP: ${{ vars.SERVER_IP }}
+        DOCKER_REPO: ${{vars.DOCKER_REPO}}
 
         steps:
         # 1. Checkout repo
         - name: Checkout code
             uses: actions/checkout@v4
 
-        # 2. Build Docker Image
+        # 2. Login to dockerhub
+        - name: Login to Docker Hub
+            uses: docker/login-action@v3
+            with:
+            username: ${{ secrets.DOCKERHUB_USERNAME }}
+            password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+        # 3. Build Docker Image
         - name: Build Docker Image
             run: |
-            docker build -t mynginxapp:latest .
+            docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/$DOCKER_REPO:latest .
 
-        # 3. Save Docker Image
-        - name: Save Docker Image
+
+        # 4. Push image to Docker Hub
+        - name: Push Docker image
             run: |
-            docker save mynginxapp:latest -o mynginxapp.tar
+            docker push ${{ secrets.DOCKERHUB_USERNAME }}/$DOCKER_REPO:latest
 
         # 4. Prepare SSH & disable host key checking
         - name: Configure SSH
@@ -85,50 +118,41 @@ This document describes how to automatically deploy a Dockerized application to 
             echo "$SSH_KEY64" | base64 -d > mykey.pem
             chmod 400 mykey.pem
 
-        # 6. Upload Docker Image (scp)
-        - name: Upload Docker Image to EC2
-            run: |
-            scp -i mykey.pem mynginxapp.tar ec2-user@$SERVER_IP:/home/ec2-user/
-
         # 7. Load & run container on EC2
-        - name: Deploy on EC2
+        - name: Deploy via Docker Compose on EC2
             run: |
             ssh -i mykey.pem ec2-user@$SERVER_IP "
-                docker load -i mynginxapp.tar &&
-                docker stop mynginxapp || true &&
-                docker rm mynginxapp || true &&
-                docker run -d -p 80:80 --name mynginxapp mynginxapp:latest
-          "
+                cd /home/ec2-user/app &&
+                docker compose pull &&
+                docker compose up -d
+            "
 
-## 6. Test the CI/CD Setup
+## 7. Test the CI/CD Setup
 
 **1. Push code -> GitHub Actions runs automatically.** 
 
 **2. GitHub Actions Triggered**
 
-![image](../images/image-1.png)
+![image](../images/image-7.png)
 ---
 **3. Docker Image Loaded on EC2**
 
-![image](../images/image-2.png)
+![image](../images/image-8.png)
 ---
-**4. Docker Container Running**
+**4. Application Running in Browser**
 
-![image](../images/image-3.png)
----
-**5. Application Running in Browser**
-
-![image](../images/image-4.png)
+![image](../images/image-9.png)
 ---
 
-## 7. Test the update
+## 8. Test the update
 
 **1. GitHub Actions Triggered**
 
-![image](../images/image-5.png)
+![image](../images/image-10.png)
 ---
 **2. Updated Application Running in Browser**
 
-![image](../images/image-6.png)
+![image](../images/image-11.png)
 
 ---
+
